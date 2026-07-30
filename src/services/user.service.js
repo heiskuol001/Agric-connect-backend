@@ -1,8 +1,9 @@
 import User from '../modules/user.module.js'
 import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
 
 
-const userService = async (name, email, password, role, phone, location) => {
+const userRegistrationService = async (name, email, password, role, phone, location) => {
     try {
         const existingUser = await User.findOne({ email })
         if (existingUser) {
@@ -26,4 +27,40 @@ const userService = async (name, email, password, role, phone, location) => {
     }
 }
 
-export default userService
+const userLoginService = async (email, password) => {
+    const userExist = await User.findOne({ email }).select("+password");
+    console.log(userExist);
+console.log("Stored password:", userExist.password);
+
+    if (!userExist) {
+        throw new Error("Invalid credentials");
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(
+        password,
+        userExist.password
+    );
+
+    if (!isPasswordCorrect) {
+        throw new Error("Invalid credentials");
+    }
+
+    const token = jwt.sign(
+        {
+            id: userExist._id,
+            role: userExist.role
+        },
+        process.env.JWT_TOKEN,
+        {
+            expiresIn: "1d"
+        }
+    );
+
+    const { password: _, ...user } = userExist.toObject();
+
+    return {
+        user,
+        token
+    };
+};
+export {userRegistrationService, userLoginService}
