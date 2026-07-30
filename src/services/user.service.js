@@ -29,8 +29,7 @@ const userRegistrationService = async (name, email, password, role, phone, locat
 
 const userLoginService = async (email, password) => {
     const userExist = await User.findOne({ email }).select("+password");
-    console.log(userExist);
-console.log("Stored password:", userExist.password);
+
 
     if (!userExist) {
         throw new Error("Invalid credentials");
