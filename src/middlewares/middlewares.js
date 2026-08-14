@@ -2,10 +2,10 @@ import multer from "multer"
 import rateLimit from "express-rate-limit"
 
 const storage = multer.diskStorage({
-    destination: (req, res, cb) => {
-        cb(null, "upload/")
+    destination: (req, file, cb) => {
+        cb(null, "uploads/")
     },
-    filename: (req, res, cb) => {
+    filename: (req, file, cb) => {
         cb(null, Date.now() + "-" + file.originalname);
     }
 })
