@@ -2,7 +2,8 @@ import jwt from "jsonwebtoken";
 
 const authMiddleware = (req, res, next) => {
     try {
-        const token = req.cookies.accessToken;
+        const authHeader = req.headers.authorization;
+        const token = (authHeader && authHeader.split(" ")[1]);
 
         if (!token) {
             return res.status(401).json({
@@ -13,7 +14,7 @@ const authMiddleware = (req, res, next) => {
 
         const decoded = jwt.verify(
             token,
-            process.env.JWT_SECRET
+            process.env.JWT_TOKEN
         );
 
         req.user = decoded;
@@ -21,9 +22,12 @@ const authMiddleware = (req, res, next) => {
         next();
 
     } catch (error) {
+        console.log("Authentication error:",
+            error.message);
+        
         return res.status(401).json({
             success: false,
-            message: "Invalid or expired token"
+            message: "Invalid or expired tokens"
         });
     }
 };
