@@ -17,7 +17,9 @@ const addProductServer = async (name, description, price, quantity, category, im
             location,
             sellerId
         })
+        
         return product
+
     } catch (error) {
         throw error
     }
