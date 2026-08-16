@@ -1,49 +1,48 @@
 import { addProductServer, deleteProductService, getProductService } from '../services/product.service.js'
 import redisClient from '../config/redis.js'
+import Product from '../modules/product.module.js'
 
 
 const addProductController = async (req, res) => {
+    const { name, description, price, quantity, category, location } = req.body;
+    const image = req.file ? req.file.path : null;
+
     try {
+        const productExist = await Product.findOne({ name });
 
-        const {
-            name,
-            description,
-            price,
-            quantity,
-            category,
-            location
-        } = req.body;
+        if (productExist) {
+            return res.status(400).json({
+                success: false,
+                message: "Product already exists"
+            });
+        }
 
-
-        const image = req.file.path;
-
-        const sellerId = req.user.id;
-
-
-        const product = await addProductService(
-            sellerId,
+        const newProduct = new Product({
             name,
             description,
             price,
             quantity,
             category,
             image,
-            location
-        );
+            location,
+            sellerId: req.user.id
+        });
 
+        await newProduct.save();
 
         res.status(201).json({
             success: true,
-            product
+            message: "Product added successfully",
+            product: newProduct
         });
 
-
     } catch (error) {
-        res.status(400).json({
+        res.status(500).json({
             success: false,
             message: error.message
         });
     }
+
 };
 
 const deleteProductController = async (req, res) => {
@@ -68,7 +67,7 @@ const deleteProductController = async (req, res) => {
             });
         }
 
-        // Delete after ownership verification
+        // Delete after ownership check
         const product = await deleteProductService(id);
 
         res.status(200).json({
