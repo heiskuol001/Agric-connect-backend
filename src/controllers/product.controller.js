@@ -1,6 +1,7 @@
 import { addProductServer, deleteProductService, getProductService } from '../services/product.service.js'
 import redisClient from '../config/redis.js'
 import Product from '../modules/product.module.js'
+import mongoose from 'mongoose';
 
 
 const addProductController = async (req, res) => {
@@ -86,8 +87,11 @@ const deleteProductController = async (req, res) => {
 
 const getProductController = async (req, res) => {
     try {
+        const sellerId = req.user.id;
 
-        const cachedProducts = await redisClient.get('products');
+        const cacheKey = `products:farmer:${sellerId}`;
+
+        const cachedProducts = await redisClient.get(cacheKey);
 
         if (cachedProducts) {
             return res.status(200).json({
@@ -96,28 +100,65 @@ const getProductController = async (req, res) => {
                 products: JSON.parse(cachedProducts)
             });
         }
-        const products = await getProductService();
+
+        const products = await Product.find({
+            sellerId: sellerId,
+            isDeleted: false
+        });
 
         await redisClient.set(
-            'products',
-            JSON.stringify(products))
-        {
-            EX: 60
-        }
-        ;
+            cacheKey,
+            JSON.stringify(products),
+            {
+                EX: 60
+            }
+        );
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             message: "Products retrieved successfully",
             products
         });
 
     } catch (error) {
-        res.status(500).json({
+        console.error("Get products error:", error);
+
+        return res.status(500).json({
             success: false,
             message: error.message
         });
     }
 };
 
-export { addProductController, deleteProductController, getProductController }
+const getFarmerProductCount = async (req, res) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.user.id)) {
+            return res.status(400).json({
+                message: 'Invalid user ID'
+            });
+        }
+
+        const sellerId = new mongoose.Types.ObjectId(req.user.id);
+        const result = await Product.aggregate([
+            {
+                $match: {
+                    sellerId: sellerId,
+                    isDeleted: false
+                }
+            },
+            {
+                $count: 'totalProducts'
+            }
+        ]);
+        res.status(200).json({
+            totalProducts: result[0]?.totalProducts || 0
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: 'failed to get product count',
+            error: error.message
+        });
+    }
+};
+
+export { addProductController, deleteProductController, getProductController, getFarmerProductCount }
