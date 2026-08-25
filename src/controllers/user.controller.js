@@ -26,28 +26,52 @@ const userLoginController = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        const { user, token } = await userLoginService(email, password);
+        const { user, token } = await userLoginService(
+            email,
+            password
+        );
 
         res.cookie("token", token, {
             httpOnly: true,
-            secure: false,
+            secure: false, // true in production with HTTPS
             sameSite: "lax",
             maxAge: 24 * 60 * 60 * 1000
         });
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             message: "Login successful",
-            user,
-            token
+            user
         });
 
     } catch (error) {
-        res.status(401).json({
+        return res.status(401).json({
             success: false,
             message: error.message
         });
     }
 };
 
-export {userRegistrationController, userLoginController}
+const userLogOutController = async (req, res) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logout successful",
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Logout failed",
+    });
+  }
+};
+
+export {userRegistrationController, userLoginController, userLogOutController}
