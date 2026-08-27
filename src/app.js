@@ -6,10 +6,18 @@ import { generalLimiter } from '../src/middlewares/middlewares.js'
 import redisClient from './config/redis.js'
 import helmet from 'helmet'
 import cookieParser from "cookie-parser"
+import path from "path"
 
 const app = express()
 
-app.use(helmet())
+app.use(
+  helmet({
+    crossOriginResourcePolicy: {
+      policy: "cross-origin",
+    },
+  })
+)
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use(
   cors({
     origin: "http://localhost:5173",
