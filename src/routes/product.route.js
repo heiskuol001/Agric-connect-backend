@@ -7,7 +7,7 @@ const router = express.Router()
 
 router.post('/api/add', upload.single('image'), authMiddleware, addProductController)
 router.delete('/api/delete/:id', authMiddleware, deleteProductController)
-router.get('/api/fetch', getProductController)
+router.get('/api/fetch', authMiddleware, getProductController)
 router.get('/api/product/count', authMiddleware, getFarmerProductCount)
 
 export default router
