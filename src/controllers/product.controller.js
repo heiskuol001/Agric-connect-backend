@@ -1,6 +1,7 @@
 import { addProductServer, deleteProductService, getProductService } from '../services/product.service.js'
 import redisClient from '../config/redis.js'
 import Product from '../modules/product.module.js'
+import Notification from '../modules/Notification.module.js';
 import mongoose from 'mongoose';
 
 
@@ -30,6 +31,13 @@ const addProductController = async (req, res) => {
         });
 
         await newProduct.save();
+
+        await Notification.create(
+            {
+                user: req.user.id,
+                message: `${newProduct.name} has been added successfully`
+            }
+        )
 
         res.status(201).json({
             success: true,
@@ -161,4 +169,24 @@ const getFarmerProductCount = async (req, res) => {
     }
 };
 
-export { addProductController, deleteProductController, getProductController, getFarmerProductCount }
+const getNotificationController = async (req, res) => {
+    try {
+        const sellerId = req.user.id
+        const getNotified = await Notification.find({
+            user: sellerId,
+            isRead: false
+        })
+        return res.status(200).json({
+            message: true,
+            getNotified
+        })
+    } catch (error) {
+        console.log('failed to get notifications', error)
+        return res.status(500).json({
+            message: 'failed to get notifications',
+            error: error.message
+        })
+    }
+}
+
+export { addProductController, deleteProductController, getProductController, getFarmerProductCount, getNotificationController }
