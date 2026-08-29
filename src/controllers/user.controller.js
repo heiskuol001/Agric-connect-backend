@@ -1,4 +1,5 @@
-import {userRegistrationService, userLoginService} from "../services/user.service.js"
+import { userRegistrationService, userLoginService } from "../services/user.service.js"
+import User from "../modules/user.module.js"
 
 
 const userRegistrationController = async (req,res) => {
@@ -74,4 +75,25 @@ const userLogOutController = async (req, res) => {
   }
 };
 
-export {userRegistrationController, userLoginController, userLogOutController}
+const getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    res.status(200).json({
+      user
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to get current user"
+    });
+  }
+};
+
+export {userRegistrationController, userLoginController, userLogOutController, getCurrentUser}
