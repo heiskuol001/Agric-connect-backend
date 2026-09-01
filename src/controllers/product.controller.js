@@ -76,17 +76,23 @@ const deleteProductController = async (req, res) => {
             });
         }
 
-        // Delete after ownership check
+        // Soft delete the product
         const product = await deleteProductService(id);
 
-        res.status(200).json({
+        // Remove old products from Redis cache
+        const cacheKey = `products:farmer:${req.user.id}`;
+        await redisClient.del(cacheKey);
+
+        return res.status(200).json({
             success: true,
             message: "Product deleted successfully",
             product
         });
 
     } catch (error) {
-        res.status(500).json({
+        console.error("Delete product error:", error);
+
+        return res.status(500).json({
             success: false,
             message: error.message
         });
