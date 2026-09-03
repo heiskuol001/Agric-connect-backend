@@ -99,6 +99,25 @@ const deleteProductController = async (req, res) => {
     }
 };
 
+const getMarketProductsController = async (req, res) => { 
+    try {
+        const products = await Product.find({ isDeleted: false }).sort({ createdAt: -1 }).select('name price quantity category location phone image sellerId createdAt updatedAt');
+
+        return res.status(200).json({
+            success: true,
+            message: 'product retrieved successfully',
+            products
+        })
+    } catch (error) {
+        console.error("Get market products error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+}
+
 const getProductController = async (req, res) => {
     try {
         const sellerId = req.user.id;
@@ -181,7 +200,7 @@ const getNotificationController = async (req, res) => {
         const getNotified = await Notification.find({
             user: sellerId,
             isRead: false
-        })
+        }).sort({ createdAt: -1 })
         return res.status(200).json({
             message: true,
             getNotified
@@ -195,4 +214,11 @@ const getNotificationController = async (req, res) => {
     }
 }
 
-export { addProductController, deleteProductController, getProductController, getFarmerProductCount, getNotificationController }
+export {
+    addProductController,
+    deleteProductController,
+    getProductController,
+    getFarmerProductCount,
+    getNotificationController,
+    getMarketProductsController
+}
